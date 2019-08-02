@@ -8,7 +8,7 @@ The study collects various measurements on patient health and cardiovascular sta
 
 * __slope_of_peak_exercise_st_segment__ (<span style="color:blue">integer</span>): the slope of the peak exercise ST segment, an electrocardiography read out indicating quality of blood flow to the heart
 * __thal__ (<span style="color:blue">categorical</span>): results of thallium stress test measuring blood flow to the heart, with 3 possible values equal to normal, fixed_defect, reversible_defect
-* __resting_blood_pressure__ (<font color="red">integer</font>): resting blood pressure
+* __resting_blood_pressure__ (<span style="color:blue">integer</span>): resting blood pressure
 * __chest_pain_type__ (<span style="color:blue">integer</span>): it takes 4 values from 1 to 4
 * __num_major_vessels__ (<span style="color:blue">integer</span>): number of major vessels colored by flouroscopy (from 0 to 3)
 * __fasting_blood_sugar_gt_120_mg_per_dl__ (<span style="color:blue">binary</span>): 1 if fasting blood sugar > 120 mg/dl, 0 otherwise
