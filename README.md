@@ -3,7 +3,7 @@
 The scope of this project is to predict the probability of heart disease in patients by using the dataset available via the UCI Machine Learning repository at this link: http://archive.ics.uci.edu/ml/datasets/statlog+(heart)
 
 ### Features
-test
+
 The study collects various measurements on patient health and cardiovascular statistics. The 13 features are:
 
 * __slope_of_peak_exercise_st_segment__ (<span style="color:blue">integer</span>): the slope of the peak exercise ST segment, an electrocardiography read out indicating quality of blood flow to the heart
