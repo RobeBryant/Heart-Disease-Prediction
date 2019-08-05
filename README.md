@@ -2,6 +2,8 @@
 
 The scope of this project is to predict the probability of heart disease in patients by using the dataset available via the UCI Machine Learning repository at this link: http://archive.ics.uci.edu/ml/datasets/statlog+(heart)
 
+* [Features](/Features.md)
+
 ### Features
 
 The study collects various measurements on patient health and cardiovascular statistics. The 13 features are:
