@@ -21,7 +21,9 @@ Additional description for some of the features is reported below.
 ##### __Slope of Peak Exercise ST Segment__
 
 The ST segment is a part of the electrocardiogram and it's represented in the picture below.  
-![](ST_segment.png){width=350px}
+
+
+<img src="ST_segment.png" width="450">
 
 From Wikipedia, the ST segment represents the isoelectric period when the ventricles are in between depolarization and repolarization. Essentially it's the period in which ventricles contract and pump blood.
 It can be used to diagnose heart conditions, for example:
