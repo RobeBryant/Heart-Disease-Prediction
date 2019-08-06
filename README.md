@@ -11,7 +11,7 @@ The dataset is divided in:
 The project is divided in the following sections:
 
 * [1. Features Description](/Features.md)
-* [2. Performance Metrics](/Performance Metrics.md)
+* [2. Performance Metrics](/Performance_Metrics.md)
 * [3. Exploratory Analysis](/EDA.md)
 * 4. Correlation Analysis
 * 5. Logistic Regression Models
