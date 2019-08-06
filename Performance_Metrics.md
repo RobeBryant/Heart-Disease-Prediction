@@ -16,6 +16,8 @@ This plot shows the log loss as a function of the predicted probability for a ca
 
 ![](LogLossPlot.png){width=350px}
 
+<img src="LogLossPlot.png" width="350">
+
 For error rate between 0 and 1, the Log Loss is equal to Cross-Entropy, which is another term often used in Machine Learning.
 
 Because the goal of the competition is minimizing the log loss, simplifying the model by reducing the number of features will not be pursued in this project.
