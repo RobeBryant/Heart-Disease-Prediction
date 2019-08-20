@@ -15,7 +15,7 @@ The project is divided in the following sections:
 * [3. Exploratory Analysis](/EDA.md)
 * [4. Correlation Analysis](/Correlation.md)
 * [5. Logistic Regression Models](/Logistic.md)
-* 6. Random Forest Models
+* [6. Random Forest Models](/RandomForest.md)
 * 7. Penalized  Regression Models
 * 8. Boosting Models
 * 9. Neural Network Models
