@@ -1,0 +1,176 @@
+---
+title: "Penalized Regression"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, echo=TRUE, warning = FALSE, message = FALSE)
+```
+
+In this section I will use different types of penalized regression to see if it can improve over the original regression models. The fundamental idea is to avoid large coefficients by penalizing them. The purpose is to decrease the variance, which is high if small differences in the input generate great changes in the output (which happens when some coefficients are large). Conceptually having large coefficients means that the model picks up the noise in the data, which of course leads to overfitting. The best performing logistic regression models I created in the previous section had low coefficients so I don't expect particular improvements but let's try!
+
+Note: to understand better how penalized logistic regression works, I found here a very good explanation
+https://eight2late.wordpress.com/2017/07/11/a-gentle-introduction-to-logistic-regression-and-lasso-regularisation-using-r/ 
+
+```{r load, echo = FALSE}
+
+# Load required packages
+library(dplyr)
+library(tidyr)
+library(plyr)
+library(ggplot2)
+
+# Load data
+training <- read.csv("train_values.csv")
+train_labels <- read.csv("train_labels.csv")
+test_values <- read.csv("test_values.csv")
+
+# Combine training files in one dataset
+training <- left_join(training, train_labels, by = "patient_id")
+
+# Transform features as factors and rename labels for some of them
+training$fasting_blood_sugar_gt_120_mg_per_dl <- as.factor(training$fasting_blood_sugar_gt_120_mg_per_dl)
+training$sex <- as.factor(training$sex)
+training$sex <- revalue(training$sex, c("0" = "female", "1" = "male"))
+training$exercise_induced_angina <- as.factor(training$exercise_induced_angina)
+training$exercise_induced_angina <- revalue(training$exercise_induced_angina, c("0" = "F", "1" = "T"))
+# For label, 0 means no heart disease
+training$heart_disease_present <- as.factor(training$heart_disease_present)
+
+test_values$fasting_blood_sugar_gt_120_mg_per_dl <- as.factor(test_values$fasting_blood_sugar_gt_120_mg_per_dl)
+test_values$sex <- as.factor(test_values$sex)
+test_values$sex <- revalue(test_values$sex, c("0" = "female", "1" = "male"))
+test_values$exercise_induced_angina <- as.factor(test_values$exercise_induced_angina)
+test_values$exercise_induced_angina <- revalue(test_values$exercise_induced_angina, c("0" = "F", "1" = "T"))
+```
+
+```{r rename, echo = FALSE}
+training$heart_disease_present <- revalue(training$heart_disease_present, 
+                                         c("0" = "N", "1" = "Y"))
+training$fasting_blood_sugar_gt_120_mg_per_dl <- revalue(training$fasting_blood_sugar_gt_120_mg_per_dl, c("0" = "N", "1" = "Y"))
+training$exercise_indiced_angina <- revalue(training$exercise_indiced_angina, 
+                                            c("0" = "F", "1" = "T"))
+```
+
+#### Model 1 - Penalized Regression
+
+The first model is developed with the caret package and the algorithm "plr" which uses the forward stepwise selection procedure to determine the variables to include in the model. This method was found useful by Google researchers for the detection of gene interactions in common diseases (https://www.ncbi.nlm.nih.gov/pubmed/17429103). The goal is to minimize the score:
+
+$$D + cp*df$$
+where
+D deviance
+df degrees of freedom
+cp complexity parameter. 
+
+This is obtained using a quadratic penalization on the coefficients. The minimizing
+criterion is:
+
+$$- log-likelihood + \lambda ∗ \lVert\beta\rVert^2$$
+The last term is what prevents the coefficients from growing too much.
+
+The tuning parameters are:
+
+* cp: if cp = "aic" or cp = "bic", these are converted to cp = 2 or cp = log(sample size), respectively. 
+* lambda (L2 Penalty)
+
+After performing a search through different values of lambda and trying both values for cp, the best performance is with lambda = 1 and cp = bic, which gives logloss 0.4234673. The Official Score is 0.3533, the best so far.
+Interestingly if I plot the importance of the variables for this model I get fairly similar results to the random forest model in the previous section, which confirms my first impression. Now 2 different models and exploratory plots are in general agreement while the simple logistic regression isn't.
+
+```{r model1}
+library(caret)
+set.seed(111)
+tunegrid <- expand.grid(cp = "bic", lambda = seq(0.0001, 1, length = 10))
+modelp1 <- train(heart_disease_present~., data = training[,2:15], method = "plr", 
+            tuneGrid=tunegrid, trControl = trainControl(method = "cv", number=5, 
+            classProbs=T, summaryFunction=mnLogLoss), metric="logLoss")
+print(modelp1)
+plot(varImp(modelp1))
+```
+
+#### Model 2 - Lasso Regression
+
+The difference with the previous model is to use the norm of the coefficients vector in the penalty term:
+
+$$- log-likelihood + \lambda ∗ \lVert\beta\rVert$$
+Lasso regression is peculiar since it tends to reduce the coefficients of the least important features to exactly 0. It works as an actual features selector.
+I implement this with the glmnet algorithm by choosing alpha = 1.
+The data also needs to be normalized with the PreProcess option. The reason for it is that the size of the coefficients affects the choice of the features, due to the penalty term, so the scale of each feature can affect the result, if normalization is not applied.
+The best model has lambda = 0.0001 and logloss = 0.4631125, worse than the previous model. The higher importance of sex is the main difference with the previous model, the other variables have similar importance. 
+
+```{r model2}
+set.seed(222)
+tunegrid2 <- expand.grid(.alpha=1, .lambda = seq(0.0001, 1, length = 10))
+modelLas <- train(heart_disease_present~., data = training[,2:15], method = "glmnet", 
+                  tuneGrid=tunegrid2, preProcess = c("center", "scale"), 
+                  trControl = trainControl(method = "cv", number=5,
+                  classProbs=T, summaryFunction=mnLogLoss), metric="logLoss")
+print(modelLas)
+plot(varImp(modelLas))
+```
+
+#### Model 3 - Ridge Regression
+
+This model differs with the previous one in the form of the penalty term, which here uses the square of the coefficients instead of the absolute value. This makes the coefficients shrink but not go to 0. 
+This method is implemented by choosing alpha = 0. Normalization and Cross-Validation are still applied. The best model has lambda = 0.06673333 and logloss = 0.4117543. The Official Score is 0.3605, very close to Model 1.
+
+```{r model3}
+set.seed(222)
+tunegrid3 <- expand.grid(.alpha=0, .lambda = seq(0.0001, 0.2, length = 10))
+modelRid <- train(heart_disease_present~., data = training[,2:15], method = "glmnet", 
+                  tuneGrid=tunegrid3, preProcess = c("center", "scale"), 
+                  trControl = trainControl(method = "cv", number=5, 
+                  classProbs=T, summaryFunction=mnLogLoss), metric="logLoss")
+print(modelRid)
+```
+
+#### Model 4 - Elastic Net
+
+Elastic Net is a combination of Ridge and Lasso regression. Lasso fails to do grouped selection since it tends to select one variable from a group and ignore the others. The quadratic part of the penalty removes the limitation on the number of selected variables,
+encourages grouping effect and stabilizes the regularization path. 
+The penalty term is:
+
+$$\lambda [(1 - \alpha)/2 * \lVert\beta\rVert^2 + \alpha ∗ \lVert\beta\rVert]$$
+
+The tuning parameters are:
+
+* alpha: mixing parameter (between 0 and 1, alpha = 0 for ridge regression, alpha = 1 for lasso) 
+* lambda: regularization parameter
+
+Below a plot that explains the conceptual difference between the 3 types of regularized regressions.
+
+<img src="ElasticNet.png" width="450">
+
+This method is implemented with glmnet algorithm and the best result is with choosing alpha = 0 (Ridge). Normalization and Cross-Validation are still applied. The best model has lambda = 0.0001 and logloss = 0.4180043. The Official Score is 0.40686, worse than previous models.
+
+```{r model4}
+set.seed(222)
+tunegrid4 <- expand.grid(.alpha=seq(0, 1, length = 5), 
+                         .lambda = seq(0.0001, 1, length = 5))
+modelEl <- train(heart_disease_present~., data = training[,2:15], method = "glmnet", 
+                  tuneGrid=tunegrid4, preProcess = c("center", "scale"), 
+                 trControl = trainControl(method = "cv", number=5, 
+                        classProbs=T, summaryFunction=mnLogLoss), metric="logLoss")
+print(modelEl)
+```
+
+#### Model 5 - Regularized Logistic
+
+The caret package also has a method specific for regularized logistic regression. The tuning parameters are:
+
+* cost
+* loss function
+* tolerance epsilon
+
+The best model has logloss = 0.4252468. The Official Score is 0.3684, close to the best one.
+
+```{r mix}
+set.seed(111)
+tunegrid5 <- expand.grid(.cost = 1, .loss = c("L1", "L2_dual", "L2_primal"),
+                         .epsilon = seq(0.01, 0.1, length.out = 5))
+modelReg <- train(heart_disease_present~., data = training[,2:15], method = "regLogistic",                   tuneGrid=tunegrid5, preProcess = c("center", "scale"),
+                  trControl = trainControl(method = "cv", number=5, 
+                        classProbs=T, summaryFunction=mnLogLoss), metric="logLoss")
+print(modelReg)
+
+# Create Output for Evaluation - Official Score: 0.3576
+```
