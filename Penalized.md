@@ -349,7 +349,3 @@ print(modelReg)
     ## logLoss was used to select the optimal model using  the smallest value.
     ## The final values used for the model were cost = 1, loss = L1 and epsilon
     ##  = 0.0775.
-
-``` r
-# Create Output for Evaluation - Official Score: 0.3576
-```
